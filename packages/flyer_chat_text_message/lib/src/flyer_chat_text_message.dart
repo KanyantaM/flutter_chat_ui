@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:flutter_highlighter/flutter_highlighter.dart';
+import 'package:flutter_highlighter/themes/github.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:provider/provider.dart';
+import 'package:markdown/markdown.dart' as md;
 
 class FlyerChatTextMessage extends StatelessWidget {
   static const BorderRadiusGeometry _sentinelBorderRadius = BorderRadius.zero;
@@ -60,6 +64,10 @@ class FlyerChatTextMessage extends StatelessWidget {
               ? paragraphStyle?.copyWith(fontSize: onlyEmojiFontSize)
               : paragraphStyle,
         ),
+        builders: {
+          'code': CodeElementBuilder(),
+          'math': MathElementBuilder(),
+        },
       ),
     );
   }
@@ -84,5 +92,44 @@ class FlyerChatTextMessage extends StatelessWidget {
     return receivedTextStyle == _sentinelTextStyle
         ? theme.typography.bodyMedium.copyWith(color: theme.colors.onSurface)
         : receivedTextStyle;
+  }
+}
+
+/// Custom builder for rendering code blocks with syntax highlighting.
+class CodeElementBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfterWithContext(BuildContext context, md.Element element,
+      TextStyle? preferredStyle, TextStyle? parentStyle) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: HighlightView(
+        element.textContent, // Extracts code content correctly
+        language: 'dart', // Set dynamically based on detected language
+        theme: githubTheme,
+        padding: const EdgeInsets.all(8.0),
+        textStyle:
+            const TextStyle(fontFamily: 'monospace', color: Colors.white),
+      ),
+    );
+  }
+}
+
+/// Custom builder for rendering LaTeX equations.
+class MathElementBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfterWithContext(
+    BuildContext context,
+    md.Element element,
+    TextStyle? preferredStyle,
+    TextStyle? parentStyle,
+  ) {
+    return Math.tex(
+      element.textContent, // Extracts LaTeX content correctly
+      textStyle: const TextStyle(fontSize: 16.0),
+    );
   }
 }
